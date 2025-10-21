@@ -552,6 +552,176 @@ DevVEla/
 2. Add environment variables in Railway dashboard
 3. Deploy automatically on git push
 
+### Render Deployment
+
+Render offers free tier hosting for your NestJS application with automatic deploys from GitHub.
+
+#### Prerequisites
+- GitHub repository (already done ✅)
+- Render account (sign up at https://render.com)
+- Your Aiven MySQL connection details
+
+#### Step-by-Step Guide
+
+1. **Create a Render Account**
+   - Go to https://render.com
+   - Sign up with your GitHub account
+
+2. **Create a New Web Service**
+   - Click "New +" → "Web Service"
+   - Connect your GitHub account if not already connected
+   - Select your repository: `Goriee/CrudAdet`
+   - Click "Connect"
+
+3. **Configure the Service**
+   
+   **Basic Settings:**
+   - **Name**: `devvela-api` (or your preferred name)
+   - **Region**: Choose closest to your Aiven MySQL region
+   - **Branch**: `main`
+   - **Root Directory**: Leave empty
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install --legacy-peer-deps && npm run build`
+   - **Start Command**: `npm run start:prod`
+   - **Instance Type**: `Free` (or paid tier for better performance)
+
+4. **Add Environment Variables**
+   
+   In the "Environment" section, click "Add Environment Variable" and add:
+   
+   ```
+   DATABASE_HOST=mysql-3bc5f3b2-gbox-098a.d.aivencloud.com
+   DATABASE_PORT=18081
+   DATABASE_USER=avnadmin
+   DATABASE_PASSWORD=<your_aiven_password>
+   DATABASE_NAME=defaultdb
+   DATABASE_SSL_MODE=REQUIRED
+   JWT_SECRET=<your_jwt_secret_32_chars_minimum>
+   JWT_REFRESH_SECRET=<your_jwt_refresh_secret_32_chars_minimum>
+   NODE_ENV=production
+   PORT=3000
+   ```
+
+5. **Handle SSL Certificate**
+   
+   Since Render doesn't allow direct file uploads during build, you have two options:
+
+   **Option A: Use Environment Variable (Recommended)**
+   
+   Add the CA certificate as an environment variable:
+   ```
+   DATABASE_SSL_CA=-----BEGIN CERTIFICATE-----
+   MIIEQTCCAqmgAwIBAgIUc...
+   -----END CERTIFICATE-----
+   ```
+   
+   Then update `src/database/database.service.ts`:
+   ```typescript
+   const sslRequired = process.env.DATABASE_SSL_MODE === 'REQUIRED';
+   const sslCaPath = process.env.DATABASE_SSL_CA_PATH || './ca.pem';
+   
+   let ssl: any = undefined;
+   if (sslRequired) {
+     if (process.env.DATABASE_SSL_CA) {
+       // Use certificate from environment variable (for Render/Heroku)
+       ssl = { ca: process.env.DATABASE_SSL_CA };
+     } else {
+       // Use certificate from file (for local development)
+       ssl = { ca: fs.readFileSync(sslCaPath) };
+     }
+   }
+   ```
+
+   **Option B: Commit Certificate to Private Repo**
+   
+   If your repository is private, you can commit the CA certificate:
+   ```bash
+   git add ca.pem -f
+   git commit -m "Add CA certificate for Render deployment"
+   git push origin main
+   ```
+   
+   Add environment variable:
+   ```
+   DATABASE_SSL_CA_PATH=./ca.pem
+   ```
+
+6. **Deploy**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your app
+   - Wait for the deployment to complete (3-5 minutes)
+   - You'll get a URL like: `https://devvela-api.onrender.com`
+
+7. **Test Your Deployment**
+   
+   Use Postman or curl to test:
+   ```bash
+   # Test signup
+   curl -X POST https://devvela-api.onrender.com/auth/signup \
+     -H "Content-Type: application/json" \
+     -d '{"username":"testuser","password":"test123"}'
+   
+   # Test login
+   curl -X POST https://devvela-api.onrender.com/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"testuser","password":"test123"}'
+   ```
+
+#### Automatic Deploys
+
+Once configured, Render will automatically deploy whenever you push to the `main` branch:
+```bash
+git add .
+git commit -m "Update feature"
+git push origin main
+```
+
+#### Monitoring & Logs
+
+- View logs: Dashboard → Your Service → Logs tab
+- Monitor performance: Dashboard → Your Service → Metrics tab
+- View deployments: Dashboard → Your Service → Events tab
+
+#### Free Tier Limitations
+
+⚠️ **Important Notes about Render Free Tier:**
+- Service **spins down after 15 minutes of inactivity**
+- **Cold start**: First request after spin down takes 30-60 seconds
+- 750 hours/month of free runtime (essentially unlimited for single service)
+- Consider upgrading to paid tier ($7/month) for always-on service
+
+#### Troubleshooting
+
+**Database Connection Issues:**
+- Verify Aiven allows connections from Render IPs
+- Check DATABASE_SSL_MODE and certificate configuration
+- View logs for specific error messages
+
+**Build Failures:**
+- Ensure `--legacy-peer-deps` is in build command
+- Check Node.js version compatibility
+- Review build logs for specific errors
+
+**Application Not Starting:**
+- Verify `npm run start:prod` works locally
+- Check all environment variables are set correctly
+- Review application logs in Render dashboard
+
+**Cold Start Timeout:**
+- Free tier services sleep after inactivity
+- First request wakes the service (30-60s delay)
+- Upgrade to paid tier for always-on service
+
+#### Render vs Other Platforms
+
+| Feature | Render Free | Heroku Free | Railway Free |
+|---------|-------------|-------------|--------------|
+| Cost | $0 | Discontinued | $5 credit/month |
+| Spin Down | After 15min | N/A | No |
+| SSL | ✅ Automatic | ✅ | ✅ |
+| Custom Domain | ✅ | ✅ | ✅ |
+| Auto Deploy | ✅ | ✅ | ✅ |
+
 ## 🤝 Contributing
 
 1. Fork the repository
