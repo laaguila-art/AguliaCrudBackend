@@ -8,12 +8,28 @@ async function bootstrap() {
   
   // Enable CORS to allow frontend requests
   app.enableCors({
-    origin: [
-      'http://localhost:5173',  // Local Vite dev server
-      'http://localhost:3000',  // Local alternative
-      'https://*.vercel.app',   // Vercel deployments
-      'https://*.netlify.app',  // Netlify deployments
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      // List of allowed origins
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+      ];
+      
+      // Check if origin matches allowed patterns
+      const isAllowed = allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.netlify.app');
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log('Blocked origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
