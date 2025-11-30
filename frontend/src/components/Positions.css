@@ -99,6 +99,10 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.position-card * {
+  color: #000 !important;
+}
+
 .position-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
@@ -106,18 +110,22 @@
 
 .position-code {
   display: inline-block;
-  background: #e7f3ff;
-  color: #0066cc;
-  padding: 0.25rem 0.75rem;
+  background: #667eea;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .position-card h3 {
-  color: #333;
+  color: #2c3e50;
   margin: 0.5rem 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .position-actions {

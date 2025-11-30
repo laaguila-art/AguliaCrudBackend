@@ -22,9 +22,12 @@ function Positions() {
   const fetchPositions = async () => {
     try {
       const response = await positionsAPI.getAll();
+      console.log('Fetched positions:', response.data);
+      console.log('Number of positions:', response.data?.length);
       setPositions(response.data);
       setError('');
     } catch (err) {
+      console.error('Error fetching positions:', err);
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
@@ -143,20 +146,33 @@ function Positions() {
         {positions.length === 0 ? (
           <p className="no-data">No positions found. Create your first position!</p>
         ) : (
-          positions.map((position) => (
-            <div key={position.id} className="position-card">
-              <div className="position-code">{position.positionCode}</div>
-              <h3>{position.positionName}</h3>
-              <div className="position-actions">
-                <button onClick={() => handleEdit(position)} className="edit-btn">
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(position.id)} className="delete-btn">
-                  Delete
-                </button>
+          positions.map((position) => {
+            // Backend uses snake_case, so we need to handle both formats
+            const id = position.position_id || position.id;
+            const code = position.position_code || position.positionCode;
+            const name = position.position_name || position.positionName;
+            
+            return (
+              <div key={id} className="position-card">
+                <div className="position-code">{code || 'NO CODE'}</div>
+                <h3 style={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                  {name || 'NO NAME'}
+                </h3>
+                {/* Debug info */}
+                <div style={{ fontSize: '10px', color: '#999', marginBottom: '10px' }}>
+                  ID: {id} | Code: "{code}" | Name: "{name}"
+                </div>
+                <div className="position-actions">
+                  <button onClick={() => handleEdit({ ...position, id, positionCode: code, positionName: name })} className="edit-btn">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(id)} className="delete-btn">
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
