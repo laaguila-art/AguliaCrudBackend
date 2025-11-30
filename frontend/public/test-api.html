@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Backend API Test</h1>
+    <button onclick="testSignup()">Test Signup</button>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="result"></div>
+
+    <script>
+        const API_URL = 'https://aguliacrudbackend.onrender.com';
+
+        async function testSignup() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing signup...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'testuser' + Date.now(),
+                        password: 'testpass123',
+                        email: 'test@test.com'
+                    })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                console.log('Signup response:', data);
+            } catch (error) {
+                result.innerHTML = `Error: ${error.message}`;
+                console.error('Signup error:', error);
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing login...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin1',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                console.log('Login response:', data);
+            } catch (error) {
+                result.innerHTML = `Error: ${error.message}`;
+                console.error('Login error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
