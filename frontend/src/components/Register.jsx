@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import './Auth.css';
@@ -9,43 +9,51 @@ function Register() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showTip, setShowTip] = useState(true);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Wake up the backend when component mounts
-    fetch('https://aguliacrudbackend.onrender.com').catch(() => {});
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    setShowTip(false);
 
     try {
+      console.log('Attempting registration:', { username, email: email || 'none' });
       const response = await authAPI.signup(username, password, email || undefined);
-      alert('Registration successful! Please login.');
+      console.log('Registration successful:', response);
+      alert('✅ Registration successful! Please login.');
       navigate('/login');
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error('Registration error full details:', err);
+      console.error('Error response:', err.response);
+      console.error('Error message:', err.message);
       
       let errorMessage = '';
       
-      if (err.response?.data?.message) {
+      // Network or connection errors
+      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        errorMessage = '❌ Cannot connect to server. Please check your internet connection or try again later.';
+      }
+      // Server returned an error response
+      else if (err.response?.data?.message) {
         if (Array.isArray(err.response.data.message)) {
-          errorMessage = err.response.data.message.join(', ');
+          errorMessage = '❌ ' + err.response.data.message.join(', ');
         } else {
-          errorMessage = err.response.data.message;
+          errorMessage = '❌ ' + err.response.data.message;
         }
-      } else if (err.response?.status === 409 || err.response?.status === 400) {
-        errorMessage = 'Username already exists. Try: admin2, admin3, testuser, etc.';
-      } else if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
-        errorMessage = '⏰ Server is waking up... Please wait 30 seconds and try again!';
+      } 
+      // HTTP status specific errors
+      else if (err.response?.status === 409) {
+        errorMessage = '❌ Username already exists. Please try a different username.';
+      } else if (err.response?.status === 400) {
+        errorMessage = '❌ Invalid input. Please check your username (min 3 chars) and password (min 6 chars).';
       } else if (err.response?.status === 500) {
-        errorMessage = 'Server error. The backend might be starting up. Try again in 30 seconds.';
-      } else {
-        errorMessage = 'Registration failed. Please try again.';
+        errorMessage = '❌ Server error. Please try again in a moment.';
+      } else if (err.response?.status) {
+        errorMessage = `❌ Server responded with error ${err.response.status}. Please try again.`;
+      }
+      // Unknown error
+      else {
+        errorMessage = `❌ Registration failed: ${err.message || 'Unknown error'}. Please try again.`;
       }
       
       setError(errorMessage);
@@ -59,12 +67,17 @@ function Register() {
       <div className="auth-card">
         <h2>Register</h2>
         
-        {showTip && (
-          <div className="info-message">
-            💡 First time? The server might take 30-60 seconds to wake up. 
-            Try usernames like: admin2, admin3, testuser
-          </div>
-        )}
+        <div style={{ 
+          fontSize: '11px', 
+          color: '#666', 
+          textAlign: 'center', 
+          marginBottom: '15px',
+          padding: '8px',
+          background: '#f5f5f5',
+          borderRadius: '4px'
+        }}>
+          🌐 Backend: <strong>aguliacrudbackend.onrender.com</strong>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -75,7 +88,7 @@ function Register() {
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={loading}
-              placeholder="e.g., admin2, testuser"
+              placeholder="Choose a username"
               minLength={3}
             />
           </div>

@@ -30,6 +30,7 @@ function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Login</h2>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
@@ -39,6 +40,7 @@ function Login() {
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your username"
             />
           </div>
           <div className="form-group">
@@ -49,6 +51,7 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              placeholder="Enter your password"
             />
           </div>
           {error && <div className="error-message">{error}</div>}
